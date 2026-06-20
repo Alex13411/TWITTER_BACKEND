@@ -2,18 +2,18 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.base import User, Tweet
-from app.schemas.tweets import TweetCreate, TweetCreateResponse
+from app.models.base import User, Tweet, Media
 from app.core.exceptions import TwitterException
 from app.schemas.common import SuccessResponse
 from app.schemas.tweets import TweetCreate, TweetCreateResponse, TweetListResponse, TweetOut, TweetLikeInfo
+
 router = APIRouter()
 def tweet_to_out(tweet: Tweet) -> TweetOut:
     """Превращает ORM-объект Tweet в формат ответа API."""
     return TweetOut(
         id=tweet.id,
         content=tweet.content,
-        attachments=[],
+        attachments=[f"/static/{media.file_path}" for media in tweet.medias],
         author=tweet.author,
         likes=[
             TweetLikeInfo(user_id=user.id, name=user.name)
@@ -53,6 +53,23 @@ def create_tweet(
     db.add(tweet)
     db.commit()
     db.refresh(tweet)
+    if tweet_data.tweet_media_ids:
+        for media_id in tweet_data.tweet_media_ids:
+            media = db.query(Media).filter(Media.id == media_id).first()
+            if not media:
+                raise TwitterException(
+                    status_code=404,
+                    error_type="NotFound",
+                    error_message=f"Медиа с id={media_id} не найдено.",
+                )
+            if media.tweet_id is not None:
+                raise TwitterException(
+                    status_code=400,
+                    error_type="BadRequest",
+                    error_message=f"Медиа с id={media_id} уже привязано к другому твиту.",
+                )
+            media.tweet_id = tweet.id
+        db.commit()
     return TweetCreateResponse(result=True, tweet_id=tweet.id)
 @router.delete("/tweets/{tweet_id}", response_model=SuccessResponse)
 def delete_tweet(

@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions import TwitterException
 from app.api.v1.users import router as users_router
 from app.api.v1.tweets import router as tweets_router
+from app.api.v1.medias import router as medias_router
+from fastapi.staticfiles import StaticFiles
 app = FastAPI(
     title="Twitter Корпоративный Бэкенд",
     version="1.0.0",
@@ -12,6 +14,8 @@ app = FastAPI(
 )
 app.include_router(users_router, prefix="/api", tags=["Users"])
 app.include_router(tweets_router, prefix="/api", tags=["Tweets"])
+app.include_router(medias_router, prefix="/api", tags=["Medias"])
+app.mount("/static", StaticFiles(directory="static"), name="static")
 # Глобальный обработчик для наших кастомных ошибок (формат по ТЗ)
 @app.exception_handler(TwitterException)
 async def twitter_exception_handler(request: Request, exc: TwitterException):
