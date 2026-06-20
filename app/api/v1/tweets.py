@@ -59,3 +59,29 @@ def like_tweet(
     current_user.liked_tweets.append(tweet)
     db.commit()
     return SuccessResponse(result=True)
+@router.delete("/tweets/{tweet_id}/likes", response_model=SuccessResponse)
+def unlike_tweet(
+    tweet_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
+
+    if not tweet:
+        raise TwitterException(
+            status_code=404,
+            error_type="TweetNotFound",
+            error_message=f"Твит с id={tweet_id} не найден",
+        )
+
+    if tweet not in current_user.liked_tweets:
+        raise TwitterException(
+            status_code=400,
+            error_type="BadRequest",
+            error_message="Вы не ставили лайк на этот твит.",
+        )
+
+    current_user.liked_tweets.remove(tweet)
+    db.commit()
+
+    return SuccessResponse(result=True)
