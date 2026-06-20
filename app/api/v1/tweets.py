@@ -6,7 +6,43 @@ from app.models.base import User, Tweet
 from app.schemas.tweets import TweetCreate, TweetCreateResponse
 from app.core.exceptions import TwitterException
 from app.schemas.common import SuccessResponse
+from app.schemas.tweets import TweetCreate, TweetCreateResponse, TweetListResponse, TweetOut, TweetLikeInfo
 router = APIRouter()
+def tweet_to_out(tweet: Tweet) -> TweetOut:
+    """Превращает ORM-объект Tweet в формат ответа API."""
+    return TweetOut(
+        id=tweet.id,
+        content=tweet.content,
+        attachments=[],
+        author=tweet.author,
+        likes=[
+            TweetLikeInfo(user_id=user.id, name=user.name)
+            for user in tweet.liked_by
+        ],
+    )
+@router.get("/tweets", response_model=TweetListResponse)
+def get_tweet_feed(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 1. id людей, на которых подписан текущий пользователь
+    following_ids = [user.id for user in current_user.following]
+    # 2. Если никого не читаешь — пустая лента
+    if not following_ids:
+        return TweetListResponse(result=True, tweets=[])
+    # 3. Все твиты от подписок
+    tweets = (
+        db.query(Tweet)
+        .filter(Tweet.author_id.in_(following_ids))
+        .all()
+    )
+    # 4. Сортировка по популярности (больше лайков — выше)
+    tweets.sort(key=lambda t: len(t.liked_by), reverse=True)
+    # 5. Преобразуем в формат API
+    return TweetListResponse(
+        result=True,
+        tweets=[tweet_to_out(tweet) for tweet in tweets],
+    )
 @router.post("/tweets", response_model=TweetCreateResponse)
 def create_tweet(
     tweet_data: TweetCreate,
