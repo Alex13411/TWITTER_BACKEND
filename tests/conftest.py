@@ -5,14 +5,15 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.core.database import Base, get_db
-from app.models.base import User  # noqa: F401 — регистрирует модели
-
+from app.models.base import User, Tweet, Media, likes, followers
+from sqlalchemy.pool import StaticPool
 # Тестовая БД в памяти
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -50,6 +51,14 @@ def client(db):
 def alice(db):
     """Тестовый пользователь Alice."""
     user = User(name="Alice", api_key="alice-key-123")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+@pytest.fixture()
+def bob(db):
+    """Тестовый пользователь Bob."""
+    user = User(name="Bob", api_key="bob-key-456")
     db.add(user)
     db.commit()
     db.refresh(user)
