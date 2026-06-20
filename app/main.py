@@ -1,11 +1,13 @@
 # app/main.py
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.core.exceptions import TwitterException
-from app.api.v1.users import router as users_router
-from app.api.v1.tweets import router as tweets_router
-from app.api.v1.medias import router as medias_router
 from fastapi.staticfiles import StaticFiles
+
+from app.api.v1.medias import router as medias_router
+from app.api.v1.tweets import router as tweets_router
+from app.api.v1.users import router as users_router
+from app.core.exceptions import TwitterException
+
 app = FastAPI(
     title="Twitter Корпоративный Бэкенд",
     version="1.0.0",

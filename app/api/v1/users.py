@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.base import User
-from app.schemas.users import UserProfileResponse
 from app.core.exceptions import TwitterException
+from app.models.base import User
 from app.schemas.common import SuccessResponse
+from app.schemas.users import UserProfileResponse
 
 router = APIRouter()
 @router.get("/users/me", response_model=UserProfileResponse)
@@ -26,7 +27,9 @@ def get_user_profile(
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise TwitterException(status_code=404, error_type="UserNotFound", error_message="Пользователь не найден")
+        raise TwitterException(status_code=404,
+        error_type="UserNotFound", 
+        error_message="Пользователь не найден")
     return UserProfileResponse(
         result=True,
         user=user,

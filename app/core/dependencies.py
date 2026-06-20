@@ -1,8 +1,10 @@
-from fastapi import Header, Depends
+from fastapi import Depends, Header
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
-from app.models.base import User
 from app.core.exceptions import TwitterException
+from app.models.base import User
+
 
 def get_current_user(
     api_key: str = Header(..., alias="api-key"),

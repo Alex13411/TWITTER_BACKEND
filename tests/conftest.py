@@ -2,11 +2,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from app.main import app
-from app.core.database import Base, get_db
-from app.models.base import User, Tweet, Media, likes, followers
 from sqlalchemy.pool import StaticPool
+
+from app.core.database import Base, get_db
+from app.main import app
+from app.models.base import User
+
 # Тестовая БД в памяти
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
